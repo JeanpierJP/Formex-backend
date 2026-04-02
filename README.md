@@ -135,14 +135,8 @@ mvn spring-boot:run
 
 ---
 
-## Repositorio Frontend
-
-🔗 [FORMEX Frontend Repository](https://github.com/SuperInkaWeb/FORMEX-frontend)
-
----
-
 ## 📧 Contacto
 
-**Email:** hola@formex.digital
+**Email:** jeanpierquispesantisteba@gmail.com
 
 ---

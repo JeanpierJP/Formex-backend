@@ -102,27 +102,39 @@ public class SubmissionController {
 
     @GetMapping("/submissions/download/{submissionId}")
     @PreAuthorize("hasAnyRole('INSTRUCTOR','STUDENT')")
-    public ResponseEntity<Resource> downloadSubmission(@PathVariable Long submissionId) throws IOException {
+    public ResponseEntity<Resource> downloadSubmission(@PathVariable Long submissionId) {
         Submission submission = submissionService.getById(submissionId);
         if (submission == null) {
             return ResponseEntity.notFound().build();
         }
 
-        Path path = submissionService.getFilePath(submission);
-        if (!Files.exists(path)) {
-            return ResponseEntity.notFound().build();
+        try {
+            String url = submission.getFileUrl();
+            Resource resource;
+            String originalFilename;
+
+            if (url != null && url.startsWith("http")) {
+                resource = new UrlResource(url);
+                // Extraer el nombre del archivo de la URL de Cloudinary
+                originalFilename = Paths.get(new java.net.URI(url).getPath()).getFileName().toString();
+            } else {
+                Path path = submissionService.getFilePath(submission);
+                if (!Files.exists(path)) {
+                    return ResponseEntity.notFound().build();
+                }
+                resource = new UrlResource(path.toUri());
+                originalFilename = path.getFileName().toString();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + originalFilename + "\"")
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
         }
-
-        Resource resource = new UrlResource(path.toUri());
-
-        // Obtener extensión real del archivo original
-        String originalFilename = path.getFileName().toString();
-
-        return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF) // si solo aceptas PDF
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + originalFilename + "\"")
-                .body(resource);
     }
 
     @PutMapping("/submissions/{id}/grade")

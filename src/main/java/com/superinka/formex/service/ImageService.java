@@ -26,5 +26,21 @@ public class ImageService {
             throw new RuntimeException("Error subiendo imagen");
         }
     }
+
+    public String uploadDocument(MultipartFile file) {
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "documents",
+                            "resource_type", "auto"
+                    )
+            );
+            return uploadResult.get("secure_url").toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error subiendo documento");
+        }
+    }
 }
 

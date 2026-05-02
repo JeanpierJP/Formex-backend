@@ -23,6 +23,7 @@ public class EvaluationService {
 
     private final EvaluationRepository evaluationRepository;
     private final CourseRepository courseRepository;
+    private final ImageService imageService;
 
     public Evaluation createEvaluation(
             Long courseId,
@@ -33,8 +34,8 @@ public class EvaluationService {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new RuntimeException("Curso no encontrado"));
 
-        // ⚠️ Aquí luego puedes usar S3, Cloudinary, etc.
-        String fileUrl = savePdf(file);
+        // Subir a Cloudinary
+        String fileUrl = imageService.uploadDocument(file);
 
         Evaluation evaluation = new Evaluation();
         evaluation.setTitle(request.getTitle());
@@ -91,13 +92,20 @@ public class EvaluationService {
                 .findByIdAndCourseId(evaluationId, courseId)
                 .orElseThrow(() -> new RuntimeException("Evaluación no encontrada"));
 
-        Path path = Paths.get(evaluation.getFileUrl());
-
-        if (!Files.exists(path)) {
-            throw new RuntimeException("Archivo no encontrado en el servidor");
+        try {
+            String url = evaluation.getFileUrl();
+            if (url != null && url.startsWith("http")) {
+                return new org.springframework.core.io.UrlResource(url);
+            } else {
+                Path path = Paths.get(url);
+                if (!Files.exists(path)) {
+                    throw new RuntimeException("Archivo no encontrado en el servidor");
+                }
+                return new FileSystemResource(path);
+            }
+        } catch (java.net.MalformedURLException e) {
+            throw new RuntimeException("Error construyendo URL de descarga", e);
         }
-
-        return new FileSystemResource(path);
     }
 
 }

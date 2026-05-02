@@ -4,6 +4,8 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+C:\Users\usuario01\Pictures\FORMEX-BACKEND\src\main\resources\application-dev.properties
+
 ### STS ###
 .apt_generated
 .classpath

@@ -23,16 +23,19 @@ public class SubmissionService {
     private final SubmissionRepository submissionRepository;
     private final UserRepository userRepository;
     private final EvaluationRepository evaluationRepository;
+    private final ImageService imageService;
 
-    // Carpeta pública para servir archivos
+    // Carpeta pública para servir archivos (legacy)
     private final String uploadDir = "src/main/resources/static/uploads/submissions";
 
     public SubmissionService(SubmissionRepository submissionRepository,
                              UserRepository userRepository,
-                             EvaluationRepository evaluationRepository) {
+                             EvaluationRepository evaluationRepository,
+                             ImageService imageService) {
         this.submissionRepository = submissionRepository;
         this.userRepository = userRepository;
         this.evaluationRepository = evaluationRepository;
+        this.imageService = imageService;
     }
 
     // 🧑‍🎓 Subir entrega
@@ -56,19 +59,14 @@ public class SubmissionService {
                 .orElseThrow(() -> new RuntimeException("Alumno no existe"));
 
 
-        // 📁 Crear carpeta si no existe
-        Files.createDirectories(Paths.get(uploadDir));
-
-        String filename = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-        Path path = Paths.get(uploadDir, filename);
-
-        Files.copy(file.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
+        // 📁 Subir a Cloudinary
+        String fileUrl = imageService.uploadDocument(file);
 
         Submission submission = new Submission();
         submission.setComment(comment);
 
         // URL pública para el navegador
-        submission.setFileUrl("/uploads/submissions/" + filename);
+        submission.setFileUrl(fileUrl);
 
         submission.setStudent(student);
         submission.setEvaluation(evaluation);
